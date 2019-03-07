@@ -27,15 +27,15 @@ This document walks you through setting up an Amazon Elastic Container Service f
 
 ### DNS requirements
 
-In addition to the requirements listed above, a domain name is also required for setting up Ingress endpoints to services running in the cluster. The specified domain name can be a top-level domain (TLD) or a subdomain. In either case you have to manually [set up the NS records](#step-3-configure-domain-registration-records) for the specified TLD or subdomain so as to delegate DNS resolution queries to an Amazon Route 53 hosted zone created and managed by BKPR.  This is required in order to generate valid TLS certificates.
+In addition to the requirements listed above, a domain name is also required for setting up Ingress endpoints to services running in the cluster. The specified domain name can be a top-level domain (TLD) or a subdomain. In either case you have to manually [set up the NS records](#step-4-configure-domain-registration-records) for the specified TLD or subdomain so as to delegate DNS resolution queries to an Amazon Route 53 hosted zone created and managed by BKPR.  This is required in order to generate valid TLS certificates.
 
 ## Installation and setup
 
 ### Step 1: Set up the cluster
 
-In this section, you will deploy an Amazon Elastic Container Service for Kubernetes (Amazon EKS) cluster using the `eksctl` tool`.
+In this section, you will deploy an Amazon Elastic Container Service for Kubernetes (Amazon EKS) cluster using the `eksctl` tool.
 
-* Make sure you have a working Amazon CLI environment. Please refer to [Configuring the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) if in doubt.
+* Make sure you have a working Amazon CLI environment. Refer to [Configuring the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) for more information.
 
 * Configure the following environment variables:
 
@@ -49,7 +49,7 @@ In this section, you will deploy an Amazon Elastic Container Service for Kuberne
   - `BKPR_DNS_ZONE` specifies the DNS suffix for the externally-visible websites and services deployed in the cluster.
   - `AWS_EKS_USER` specifies the email address used in requests to Let's Encrypt.
   - `AWS_EKS_CLUSTER` specifies the name of the AKS cluster.
-  - `AWS_EKS_K8S_VERSION` specifies the version of Kubernetes to use for creating the cluster. The [BKPR Kubernetes version support matrix](../README.md#kubernetes-version-support-matrix-for-bkpr-10) lists the base Kubernetes versions supported by BKPR.
+  - `AWS_EKS_K8S_VERSION` specifies the version of Kubernetes to use for creating the cluster. The [BKPR Kubernetes version support matrix](../README.md#kubernetes-version-support-matrix-for-bkpr) lists the base Kubernetes versions supported by BKPR.
 
 * Create the EKS cluster:
 
@@ -78,59 +78,57 @@ In this section, you will deploy an Amazon Elastic Container Service for Kuberne
 
 In order to authenticate users for applications running atop EKS, BKPR requires a User Pool in AWS Cognito to be configured.
 
-If you already have a working User Pool in AWS Cognito that you would like to use for authenticating users, you will need to retrieve its ID in the form `${AWS_REGION}-${USER_POOL_ID}`, and write it down. Using this `Pool Id`, skip at the end of this section.
-
-Else, If you are new to using BKPR on EKS, or if you want to create a new User Pool in AWS Cognito, please follow these steps:
-
-1. Browse to the [Cognito](https://console.aws.amazon.com/cognito/) module in the AWS Console
-2. Click on the `Manage User Pools` button
-3. Click on the `Create a user pool` button on the top-right corner
-4. Enter a valid `Pool name` like `eks-test`
-5. Click on the `Step through settings` button
-6. In the `Attributes` section leave all the checkboxes unticked as shown below:
-
-<p align="center"><img src="eks/1-Attributes.png" width=840/></p>
-
-7. Click on the `Next step` button
-8. In the `Policies` section leave all the checkboxes unticked and select `Only allow administrators to create users` as shown below:
-
-<p align="center"><img src="eks/2-Policies.png" width=840/></p>
-
-9. Click on the `Next step` button
-10. In the `MFA and verifications` section select `No verification` as shown below:
-
-<p align="center"><img src="eks/3-MFA.png" width=840/></p>
-
-11. Click on the `Next step` button
-12. In the `Message customizations` section do not change anything and click on the `Next step` button
-13. In the `Tags` section you can add additional tags for your EKS cluster, if needed
-14. Click on the `Next step` button
-15. In the `Devices` section do not change anything and click on the `Next step` button
-16. In the `App clients` section do not change anything and click on the `Next step` button
-17. In the `Triggers` section do not change anything and click on the `Next step` button
-18. In the `Review` section you will see a quick summary of the user pool that will be created, like the onw shown below:
-
-<p align="center"><img src="eks/4-Review.png" width=840/></p>
-
-19. Click on the `Create pool` button to create the user pool
-20. The user pool will be created and the `General settings` page will be displayed, where you can find the User Pool ID and ARN:
-
-<p align="center"><img src="eks/5-User-Pool.png" width=840/></p>
-
-Take note of the `Pool Id` and export its value:
+If you already have a working User Pool in AWS Cognito that you would like to use for authenticating users, you will need to retrieve its ID in the form `${AWS_REGION}-${USER_POOL_ID}`, and export it:
 
   ```bash
   export AWS_COGNITO_USER_POOL_ID=eu-central-1_sHSdWT6VL
   ```
 
+And skip to the [Create user](#create-a-user) section below.
+
+Else, If you are new to using BKPR on EKS, or if you want to create a new User Pool in AWS Cognito, please follow these steps:
+
+1. Browse to the [Cognito](https://console.aws.amazon.com/cognito/) module in the AWS Console
+2. Navigate to **Manage User Pools > Create a user pool**
+3. Enter a valid **Pool name**, like `eks-test`, then on the **Step through settings** button
+4. In the **Attributes** section leave all the checkboxes unticked as shown below and go to the **Next step**
+
+<p align="center"><img src="eks/1-Attributes.png" width=840/></p>
+
+5. In the **Policies** section leave all the checkboxes unticked and select **Only allow administrators to create users** as shown below and go to the **Next step**
+
+<p align="center"><img src="eks/2-Policies.png" width=840/></p>
+
+6. In the **MFA and verifications** section select **No verification** as shown below and go to the **Next step**
+
+<p align="center"><img src="eks/3-MFA.png" width=840/></p>
+
+7. In the **Message customizations** section do not change anything and click on the **Next step** button
+8. In the **Tags** section you can add additional tags for your EKS cluster, if needed, then go to the **Next step**
+9. In the **Devices** section do not change anything and click on the **Next step** button
+10. In the **App clients** section do not change anything and click on the **Next step** button
+11. In the **Triggers** section do not change anything and click on the **Next step** button
+12. In the **Review** section you will see a quick summary of the user pool that will be created, like the onw shown below, and click on the **Create pool** button to create the user pool
+
+<p align="center"><img src="eks/4-Review.png" width=840/></p>
+
+13. The user pool will be created and the **General settings** page will be displayed, where you can find the User Pool ID and ARN:
+
+<p align="center"><img src="eks/5-User-Pool.png" width=840/></p>
+
+Take note of the **Pool Id** and export its value:
+
+  ```bash
+  export AWS_COGNITO_USER_POOL_ID=eu-central-1_sHSdWT6VL
+  ```
+
+#### Create a user
+
 In order to access protected resources which require authentication like Prometheus, Kibana or Grafana, you will need to configure users in the newly created user pool. The next steps highlight how to create a test user which can be used to access these protected resources:
 
 1. Browse to the [Cognito](https://console.aws.amazon.com/cognito/) module in the AWS Console
-2. Click on the `Manage User Pools` button
-3. Click on the button for the user pool you just created
-4. Click on the `Users and groups` option from the menu on the left
-5. Click on the `Create user` button
-6. Fill in the input fields as shown below:
+1. Navigate to **Manage User Pools > YOUR_USER_POOL > Users and Groups > Create user**
+1. Fill in the input fields as shown below:
 
 <p align="center"><img src="eks/6-User.png" width="400"></p>
 
@@ -200,7 +198,7 @@ Edit the `kubeprod-manifest.jsonnet` file that was generated by `kubeprod instal
 
 ### Step 3: Perform the upgrade
 
-Re-run the `kubeprod install` command, from the [Deploy BKPR](#step-2-deploy-bkpr) step, in the directory containing the existing `kubeprod-autogen.json` and updated `kubeprod-manifest.jsonnet` files.
+Re-run the `kubeprod install` command, from the [Deploy BKPR](#step-3-deploy-bkpr) step, in the directory containing the existing `kubeprod-autogen.json` and updated `kubeprod-manifest.jsonnet` files.
 
 ## Teardown and cleanup
 
